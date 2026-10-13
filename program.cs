@@ -101,7 +101,7 @@ class Student
             for (int i = 1; i < studentCount; i++)
             {
                 Student student = new Student(i);
-                student.SelectCoursesForRegistration(2);
+                student.SelectCoursesForRegistration(5);
 
                 Thread t = new Thread(() =>
                 {
