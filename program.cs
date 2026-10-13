@@ -50,58 +50,74 @@ class Student
 
     public bool RegisterMyCourses()
     {
-        // var orderedCourses = courses.OrderBy(c => c).ToList();
 
-        foreach (var c in courses)
+        // foreach (var c in courses)
+        // {
+            // int first = Math.Min(courses[0], courses[1]);
+            // int second = Math.Max(courses[0], courses[1]);
+
+            // lock (Program.c.courseLocks[courses[first]])
+            // {
+            //     Thread.Sleep(10);
+            //     lock (Program.c.courseLocks[courses[second]])
+            //     {
+            //         Program.c.course_availseats[courses[0]]--;
+            //         Program.c.course_availseats[courses[1]]--;
+            //     }
+            // }
+            // }
+            // Console.WriteLine($"Student {id}: Finished registrations");
+            // return true;
+
+            var ordered = courses.OrderBy(c => c).ToList();
+            GetAndRegister(ordered, 0);
+            Console.WriteLine($"Student {id}: Finished registrations");
+            return true;
+        }
+    private void GetAndRegister(List<int> ordered, int index)
+    {
+        if (index == ordered.Count) //once i = course count, end
         {
-            int first = Math.Min(courses[0], courses[1]);
-            int second = Math.Max(courses[0], courses[1]);
-            
-            lock (Program.c.courseLocks[courses[0]])
+            foreach (var c in ordered)
             {
-                Thread.Sleep(10);
-                lock (Program.c.courseLocks[courses[1]])
-                {
-                    Program.c.course_availseats[courses[0]]--;
-                    Program.c.course_availseats[courses[1]]--;
-                }
+                Program.c.course_availseats[c]--;
+                return;
             }
         }
-        Console.WriteLine($"Student {id}: Finished registrations");
-        return true;
+        lock (Program.c.courseLocks[ordered[index]])
+        {
+            Thread.Sleep(10);
+            GetAndRegister(ordered, index + 1);
+        }
     }
-}
-class Program
-{
-    public static Course c = new();
-    // 1) Create a thread to do N (1000) registrations
-    //create student
-    //student.SelectCoursesForRegistration
-    //student.RegisterMyCourses
-    static void Main(string[] args)
+    class Program
     {
-        int studentCount = 100;
-        List<Thread> threads = new();
-
-        for (int i = 1; i < studentCount; i++)
+        public static Course c = new();
+        static void Main(string[] args)
         {
-            Student student = new Student(i);
-            student.SelectCoursesForRegistration(2);
+            int studentCount = 100;
+            List<Thread> threads = new();
 
-            Thread t = new Thread(() =>
+            for (int i = 1; i < studentCount; i++)
             {
-                student.RegisterMyCourses();
-            });
+                Student student = new Student(i);
+                student.SelectCoursesForRegistration(2);
 
-            threads.Add(t);
-            t.Start();
+                Thread t = new Thread(() =>
+                {
+                    student.RegisterMyCourses();
+                });
 
+                threads.Add(t);
+                t.Start();
+
+            }
+            foreach (var t in threads)
+            {
+                t.Join();
+            }
+
+            Console.WriteLine("\n All registrations completed. \n");
         }
-        foreach (var t in threads)
-        {
-            t.Join();
-        }
-
-        Console.WriteLine("\n All registrations completed. \n");
     }
 }
