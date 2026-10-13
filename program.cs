@@ -8,7 +8,7 @@ class Course
     public Dictionary<int, int> course_availseats = new();
     public Dictionary<int, object> courseLocks = new();
 
-    private readonly object courseLock = new();
+    // private readonly object courseLock = new();
 
     public Course(int courses = 100, int availseats = 10_000)
     {
@@ -20,13 +20,13 @@ class Course
         }
     }
 
-    public void DecrementSeat(int courseId)
-    {
-        lock (courseLock)
-        {
-            course_availseats[courseId]--;
-        }
-    }
+    // public void DecrementSeat(int courseId)
+    // {
+    //     lock (courseLock)
+    //     {
+    //         course_availseats[courseId]--;
+    //     }
+    // }
 }
 class Student
 {
@@ -86,7 +86,7 @@ class Student
         }
         lock (Program.c.courseLocks[ordered[index]])
         {
-            Thread.Sleep(10);
+            // Thread.Sleep(10);
             GetAndRegister(ordered, index + 1);
         }
     }
