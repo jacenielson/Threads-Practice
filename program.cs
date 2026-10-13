@@ -30,10 +30,10 @@ class Course
 }
 class Student
 {
-    public long id;
+    public int id;
     public List<int> courses;
 
-    public Student(long in_id)
+    public Student(int in_id)
     {
         id = in_id;
         courses = new();
@@ -43,7 +43,9 @@ class Student
     {
         for (int i = 0; i < num; i++)
         {
-            courses.Add(Random.Shared.Next(1, 100));
+            int pick = Random.Shared.Next(1, 100);
+            if (!courses.Contains(pick))
+                courses.Add(pick);
         }
 
     }
@@ -53,41 +55,50 @@ class Student
 
         // foreach (var c in courses)
         // {
-            // int first = Math.Min(courses[0], courses[1]);
-            // int second = Math.Max(courses[0], courses[1]);
+        // int first = Math.Min(courses[0], courses[1]);
+        // int second = Math.Max(courses[0], courses[1]);
 
-            // lock (Program.c.courseLocks[courses[first]])
-            // {
-            //     Thread.Sleep(10);
-            //     lock (Program.c.courseLocks[courses[second]])
-            //     {
-            //         Program.c.course_availseats[courses[0]]--;
-            //         Program.c.course_availseats[courses[1]]--;
-            //     }
-            // }
-            // }
-            // Console.WriteLine($"Student {id}: Finished registrations");
-            // return true;
+        // lock (Program.c.courseLocks[courses[first]])
+        // {
+        //     Thread.Sleep(10);
+        //     lock (Program.c.courseLocks[courses[second]])
+        //     {
+        //         Program.c.course_availseats[courses[0]]--;
+        //         Program.c.course_availseats[courses[1]]--;
+        //     }
+        // }
+        // }
+        // Console.WriteLine($"Student {id}: Finished registrations");
+        // return true;
 
-            var ordered = courses.OrderBy(c => c).ToList();
-            GetAndRegister(ordered, 0);
+        var ordered = courses.OrderBy(c => c).ToList();
+        if (GetAndRegister(ordered, 0))
+        {
             Console.WriteLine($"Student {id}: Finished registrations");
             return true;
         }
-    private void GetAndRegister(List<int> ordered, int index)
+        return false;
+
+    }
+    private bool GetAndRegister(List<int> ordered, int index)
     {
+
         if (index == ordered.Count) //once i = course count, end
         {
+            bool allRegistered = true;
             foreach (var c in ordered)
             {
-                Program.c.course_availseats[c]--;
-                return;
+                if (Program.c.course_availseats[c] > 0)
+                    Program.c.course_availseats[c]--;
+                else
+                    allRegistered = false; 
             }
+            return allRegistered;
         }
         lock (Program.c.courseLocks[ordered[index]])
         {
             // Thread.Sleep(10);
-            GetAndRegister(ordered, index + 1);
+            return GetAndRegister(ordered, index + 1);
         }
     }
     class Program
@@ -105,7 +116,8 @@ class Student
 
                 Thread t = new Thread(() =>
                 {
-                    student.RegisterMyCourses();
+                    if(!student.RegisterMyCourses())
+                    Console.WriteLine($"Student {student.id} failed to register course list.");
                 });
 
                 threads.Add(t);
@@ -115,6 +127,11 @@ class Student
             foreach (var t in threads)
             {
                 t.Join();
+            }
+            Console.WriteLine("\nAll seats assigned\n");
+            foreach (var x in c.course_availseats)
+            {
+                Console.WriteLine($"Course {x.Key} has {x.Value} seats still aailable.");
             }
 
             Console.WriteLine("\n All registrations completed. \n");
